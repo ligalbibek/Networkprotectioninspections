@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Site Survey</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;color:#1a1a18;}
+.shell{width:100%;max-width:560px;}
+.progress-bar{height:3px;background:rgba(0,0,0,0.08);border-radius:99px;margin-bottom:2rem;overflow:hidden;}
+.progress-fill{height:100%;background:#1a1a18;border-radius:99px;transition:width 0.4s cubic-bezier(.4,0,.2,1);}
+.card{background:#fff;border-radius:20px;border:0.5px solid rgba(0,0,0,0.1);padding:2.5rem 2rem;min-height:320px;display:flex;flex-direction:column;}
+.step-label{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#888780;margin-bottom:1.5rem;}
+.question{font-size:20px;font-weight:500;color:#1a1a18;margin-bottom:0.4rem;line-height:1.3;}
+.sub-label{font-size:12px;font-weight:500;color:#888780;margin-bottom:0.3rem;margin-top:1.2rem;text-transform:uppercase;letter-spacing:0.06em;}
+.hint{font-size:13px;color:#888780;margin-bottom:1.5rem;line-height:1.5;}
+.answer-area{flex:1;display:flex;flex-direction:column;justify-content:flex-start;}
+select,input[type="text"],input[type="file"],textarea{width:100%;padding:12px 14px;border:0.5px solid rgba(0,0,0,0.18);border-radius:10px;font-size:16px;font-family:inherit;color:#1a1a18;background:#fff;outline:none;appearance:none;transition:border-color 0.15s,box-shadow 0.15s;}
+select:focus,input[type="text"]:focus,textarea:focus{border-color:#1a1a18;box-shadow:0 0 0 3px rgba(26,26,24,0.08);}
+textarea{resize:vertical;min-height:90px;line-height:1.6;}
+.select-wrap{position:relative;}
+.select-wrap::after{content:'';position:absolute;right:14px;top:50%;transform:translateY(-50%);border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #888780;pointer-events:none;}
+.yn-group{display:flex;gap:10px;}
+.yn-btn{flex:1;padding:14px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;font-size:16px;font-family:inherit;font-weight:500;color:#5f5e5a;cursor:pointer;text-align:center;transition:all 0.15s;}
+.yn-btn:hover{background:#f5f5f3;border-color:rgba(0,0,0,0.3);}
+.yn-btn.sel-yes{background:#3b6d11;border-color:#3b6d11;color:#fff;}
+.yn-btn.sel-no{background:#1a1a18;border-color:#1a1a18;color:#fff;}
+.chip-group{display:flex;flex-wrap:wrap;gap:10px;}
+.chip{padding:10px 18px;border-radius:99px;border:0.5px solid rgba(0,0,0,0.18);background:#fff;font-size:15px;font-family:inherit;color:#5f5e5a;cursor:pointer;transition:all 0.15s;user-select:none;}
+.chip:hover{border-color:rgba(0,0,0,0.35);background:#f5f5f3;}
+.chip.selected{background:#1a1a18;color:#fff;border-color:#1a1a18;}
+.loc-btn{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.18);background:#fff;font-size:15px;font-family:inherit;color:#1a1a18;cursor:pointer;width:100%;margin-bottom:12px;transition:background 0.15s;}
+.loc-btn:hover{background:#f5f5f3;}
+.loc-btn svg{width:18px;height:18px;flex-shrink:0;}
+.loc-status{font-size:13px;color:#3b6d11;padding:10px 14px;background:#eaf3de;border-radius:8px;display:none;word-break:break-all;line-height:1.5;margin-bottom:10px;}
+.loc-status.error{color:#a32d2d;background:#fcebeb;}
+.field-group{margin-top:1.2rem;}
+.field-group:first-child{margin-top:0;}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-top:2rem;}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;color:#888780;background:none;border:none;cursor:pointer;padding:8px 0;font-family:inherit;transition:color 0.15s;}
+.nav-back:hover{color:#1a1a18;}
+.nav-back svg{width:14px;height:14px;}
+.nav-back:disabled{opacity:0.3;cursor:not-allowed;}
+.nav-next{display:flex;align-items:center;gap:8px;padding:11px 22px;background:#1a1a18;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;font-family:inherit;cursor:pointer;transition:opacity 0.15s,transform 0.1s;}
+.nav-next:hover{opacity:0.85;}
+.nav-next:active{transform:scale(0.98);}
+.nav-next svg{width:14px;height:14px;}
+.enter-hint{font-size:11px;color:#b4b2a9;text-align:center;margin-top:1rem;}
+kbd{display:inline-block;padding:1px 5px;border:0.5px solid #d3d1c7;border-radius:4px;font-size:10px;font-family:inherit;color:#888780;background:#f5f5f3;}
+.summary-list{list-style:none;}
+.summary-list li{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);font-size:13px;cursor:pointer;}
+.summary-list li:hover{background:#fafaf9;}
+.summary-list li:last-child{border-bottom:none;}
+.summary-q{color:#888780;flex:1;}
+.summary-a{font-weight:500;color:#1a1a18;text-align:right;flex:1;}
+.submit-btn{width:100%;padding:14px;margin-top:1.5rem;background:#1a1a18;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:500;font-family:inherit;cursor:pointer;transition:opacity 0.15s;}
+.submit-btn:hover{opacity:0.85;}
+.submit-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.done-icon{width:52px;height:52px;background:#eaf3de;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;}
+.done-icon svg{width:24px;height:24px;stroke:#3b6d11;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.photo-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.photo-thumb{width:72px;height:72px;border-radius:8px;object-fit:cover;border:0.5px solid rgba(0,0,0,0.12);}
+.photo-remove{position:relative;display:inline-block;}
+.photo-remove-btn{position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:#e24b4a;color:#fff;border:none;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+.file-label{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:10px;border:0.5px solid rgba(0,0,0,0.18);background:#fff;font-size:15px;font-family:inherit;color:#1a1a18;cursor:pointer;width:100%;transition:background 0.15s;}
+.file-label:hover{background:#f5f5f3;}
+.file-label svg{width:18px;height:18px;flex-shrink:0;}
+.warn-badge{display:inline-block;font-size:11px;font-weight:500;background:#faeeda;color:#633806;border-radius:6px;padding:3px 8px;margin-left:8px;vertical-align:middle;}
+.slide-enter{animation:slideIn 0.28s cubic-bezier(.4,0,.2,1);}
+.slide-back{animation:slideBack 0.28s cubic-bezier(.4,0,.2,1);}
+@keyframes slideIn{from{opacity:0;transform:translateX(32px);}to{opacity:1;transform:translateX(0);}}
+@keyframes slideBack{from{opacity:0;transform:translateX(-32px);}to{opacity:1;transform:translateX(0);}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="card" id="card">
+    <div class="step-label" id="stepLabel"></div>
+    <div class="question" id="question"></div>
+    <div class="hint" id="hint"></div>
+    <div class="answer-area" id="answerArea"></div>
+    <div class="nav">
+      <button class="nav-back" id="backBtn" onclick="goBack()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10 4 6 8 10 12"/></svg>
+        Back
+      </button>
+      <button class="nav-next" id="nextBtn" onclick="goNext()">Continue
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 4 10 8 6 12"/></svg>
+      </button>
+    </div>
+  </div>
+  <p class="enter-hint">Press <kbd>Enter</kbd> to continue &nbsp;·&nbsp; <kbd>Shift</kbd>+<kbd>Enter</kbd> to go back</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+emailjs.init('3y2h2-SFGSwQjkHrL');
+
+const NAMES = ['Dean West','Mark Butler','Tod Andrew','Bibek Ligal','Tom White'];
+const SUBBIES = ['Subby1','Subby2','Subby3','Subby4'];
+
+let answers = {};
+let photoFiles = [];
+let gpsCoords = null;
+let stepHistory = [];
+
+function buildSteps() {
+  const nbn = answers.nbn;
+  const waterExtracted = answers.water_extracted;
+  const standpipeAuth = answers.standpipe_auth;
+  const vertClear = answers.vert_clearance;
+  const horizClear = answers.horiz_clearance;
+  const horizWSA = answers.horiz_wsa;
+
+  const steps = [];
+
+  steps.push({ id:'name',        q:'What is your name?',                              hint:'Select your name from the list.',                               type:'select',      options:NAMES,   placeholder:'Select your name', required:true });
+  steps.push({ id:'location',    q:'Site location',                                   hint:'Use GPS to capture your location, or enter manually.',          type:'location',    required:true });
+  steps.push({ id:'nbn',         q:'NBN related works?',                              hint:'Default is Yes.',                                               type:'yesno',       defaultVal:'Yes', required:true });
+  steps.push({ id:'services',    q:'What services are affected?',                     hint:'Select all that apply.',                                        type:'multiselect', options:['Sewer','Water','Effluent'], required:true });
+  steps.push({ id:'critical',    q:'Is it critical (≥300mm) infrastructure?',         hint:'Default is No.',                                                type:'yesno',       defaultVal:'No', required:true });
+
+  if (nbn === 'Yes') {
+    steps.push({ id:'nbn_contractor', q:'Name of NBN contractor',                    hint:'Select the NBN contractor on site.',                            type:'select', options:SUBBIES, placeholder:'Select contractor', required:true });
+  } else if (nbn === 'No') {
+    steps.push({ id:'contractor',     q:'Name of contractor',                         hint:'Select the contractor on site.',                               type:'select', options:SUBBIES, placeholder:'Select contractor', required:true });
+  } else {
+    steps.push({ id:'__nbn_placeholder', q:'Name of contractor', hint:'Answer Q3 first to unlock this.', type:'yesno', defaultVal:'Yes', required:true, hidden:true });
+  }
+
+  steps.push({ id:'water_extracted', q:'Is water being extracted?',                  hint:'Default is No.',                                                type:'yesno', defaultVal:'No', required:true });
+
+  if (waterExtracted === 'Yes') {
+    steps.push({ id:'standpipe_auth', q:'Is the contractor using an IW authorised standpipe?', hint:'Default is No.',                                      type:'yesno', defaultVal:'No', required:true });
+    if (standpipeAuth === 'Yes') {
+      steps.push({ id:'standpipe_id', q:'Please enter standpipe identifier',         hint:'If this is the first inspection, confirm the identifier before entering.', type:'text', placeholder:'e.g. SP-00123', required:true });
+    }
+  }
+
+  steps.push({ id:'asset_strike', q:'Is this inspection related to an asset strike or damage?', hint:'Select yes or no.',                                  type:'yesno', defaultVal:'No', required:true });
+
+  steps.push({
+    id:'checklist', q:'Inspection checklist',
+    hint:'Work through each item below.',
+    type:'checklist',
+    required:true,
+    items:[
+      { id:'vert_clearance',  label:'Q12a — Vertical clearance of min 600mm is maintained?', defaultVal:'Yes' },
+      ...(vertClear==='No' ? [{ id:'vert_clarification', label:'Please add clarification for vertical clearance', type:'text', placeholder:'Describe the issue...' }] : []),
+      { id:'horiz_clearance', label:'Q12b — Horizontal clearance is more than PPE?', defaultVal:'Yes' },
+      ...(horizClear==='No' ? [{ id:'horiz_wsa', label:'Is the clearance greater than WSA minimum standards?', defaultVal:'Yes' }] : []),
+      ...(horizClear==='No' && horizWSA==='No' ? [{ id:'horiz_clarification', label:'Please add clarification for horizontal clearance', type:'text', placeholder:'Describe the issue...' }] : []),
+    ]
+  });
+
+  steps.push({ id:'general_notes', q:'General notes',                                hint:'Add any other observations or comments. Optional.',             type:'textarea', placeholder:'Enter general notes...', required:false });
+  steps.push({ id:'photos',        q:'Add photos',                                   hint:'Select photos from your library. These will be attached to the email.', type:'photos', required:false });
+
+  return steps;
+}
+
+let steps = buildSteps();
+let currentIdx = 0;
+
+function getVisibleSteps() {
+  return buildSteps().filter(s => !s.hidden);
+}
+
+function render(dir) {
+  steps = buildSteps();
+  const visibleSteps = steps.filter(s => !s.hidden);
+  const step = visibleSteps[currentIdx];
+  if (!step) return;
+
+  const total = visibleSteps.length;
+  document.getElementById('progressFill').style.width = ((currentIdx+1)/total*100)+'%';
+  document.getElementById('stepLabel').textContent = 'Step '+(currentIdx+1)+' of '+total;
+  document.getElementById('question').textContent = step.q;
+  document.getElementById('hint').textContent = step.hint||'';
+
+  const area = document.getElementById('answerArea');
+  area.innerHTML = '';
+
+  const card = document.getElementById('card');
+  card.classList.remove('slide-enter','slide-back');
+  void card.offsetWidth;
+  card.classList.add(dir==='back'?'slide-back':'slide-enter');
+
+  const saved = answers[step.id];
+
+  if (step.type==='select') {
+    renderSelect(area, step, saved);
+  } else if (step.type==='yesno') {
+    renderYesNo(area, step, saved||step.defaultVal);
+  } else if (step.type==='multiselect') {
+    renderMultiSelect(area, step, saved);
+  } else if (step.type==='location') {
+    renderLocation(area, step, saved);
+  } else if (step.type==='text') {
+    renderText(area, step, saved);
+  } else if (step.type==='textarea') {
+    renderTextarea(area, step, saved);
+  } else if (step.type==='checklist') {
+    renderChecklist(area, step);
+  } else if (step.type==='photos') {
+    renderPhotos(area, step);
+  }
+
+  document.getElementById('backBtn').disabled = currentIdx===0;
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.style.display = 'flex';
+  const isLast = currentIdx===visibleSteps.length-1;
+  nextBtn.innerHTML = isLast
+    ? 'Review <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 4 10 8 6 12"/></svg>'
+    : 'Continue <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 4 10 8 6 12"/></svg>';
+}
+
+function renderSelect(area, step, saved) {
+  const wrap = document.createElement('div'); wrap.className='select-wrap';
+  const sel = document.createElement('select'); sel.id='input-main';
+  const def = document.createElement('option');
+  def.value=''; def.disabled=true; def.selected=!saved; def.textContent=step.placeholder||'Select...';
+  sel.appendChild(def);
+  step.options.forEach(o=>{
+    const opt=document.createElement('option');
+    opt.value=o; opt.textContent=o; if(saved===o) opt.selected=true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change',()=>{ answers[step.id]=sel.value; });
+  wrap.appendChild(sel); area.appendChild(wrap);
+  setTimeout(()=>sel.focus(),50);
+}
+
+function renderYesNo(area, step, val) {
+  answers[step.id] = val;
+  const group = document.createElement('div'); group.className='yn-group';
+  ['Yes','No'].forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='yn-btn'+(val===opt?' sel-'+opt.toLowerCase():'');
+    btn.textContent=opt;
+    btn.onclick=()=>{
+      answers[step.id]=opt;
+      group.querySelectorAll('.yn-btn').forEach(b=>b.className='yn-btn');
+      btn.className='yn-btn sel-'+opt.toLowerCase();
+    };
+    group.appendChild(btn);
+  });
+  area.appendChild(group);
+}
+
+function renderMultiSelect(area, step, saved) {
+  const selected = saved?[...saved]:[];
+  answers[step.id]=selected;
+  const group=document.createElement('div'); group.className='chip-group';
+  step.options.forEach(opt=>{
+    const chip=document.createElement('div');
+    chip.className='chip'+(selected.includes(opt)?' selected':'');
+    chip.textContent=opt;
+    chip.onclick=()=>{
+      const idx=answers[step.id].indexOf(opt);
+      if(idx>-1){answers[step.id].splice(idx,1);chip.classList.remove('selected');}
+      else{answers[step.id].push(opt);chip.classList.add('selected');}
+    };
+    group.appendChild(chip);
+  });
+  area.appendChild(group);
+}
+
+function renderLocation(area, step, saved) {
+  const locBtn=document.createElement('button'); locBtn.className='loc-btn';
+  locBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.25-8 13-8 13S4 15.25 4 10a8 8 0 0 1 8-8z"/></svg><span id="locBtnText">Use current GPS location</span>';
+  const status=document.createElement('div'); status.className='loc-status'; status.id='locStatus';
+  if(gpsCoords){
+    status.style.display='block';
+    const txt='GPS: '+gpsCoords.lat.toFixed(6)+', '+gpsCoords.lng.toFixed(6);
+    status.textContent=txt; answers[step.id]=txt;
+  }
+  locBtn.onclick=()=>{
+    document.getElementById('locBtnText').textContent='Getting location...';
+    locBtn.disabled=true;
+    if(!navigator.geolocation){
+      status.style.display='block';status.className='loc-status error';
+      status.textContent='GPS not supported.';locBtn.disabled=false;
+      document.getElementById('locBtnText').textContent='Use current GPS location';return;
+    }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      gpsCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      const txt='GPS: '+gpsCoords.lat.toFixed(6)+', '+gpsCoords.lng.toFixed(6);
+      answers[step.id]=txt;
+      status.style.display='block';status.className='loc-status';
+      status.textContent=txt+(pos.coords.accuracy?' (±'+Math.round(pos.coords.accuracy)+'m)':'');
+      document.getElementById('locBtnText').textContent='Update GPS location';
+      locBtn.disabled=false;
+    },()=>{
+      status.style.display='block';status.className='loc-status error';
+      status.textContent='Could not get location. Enter manually below.';
+      document.getElementById('locBtnText').textContent='Retry GPS';locBtn.disabled=false;
+    },{enableHighAccuracy:true,timeout:10000});
+  };
+  area.appendChild(locBtn);area.appendChild(status);
+  const lbl=document.createElement('label');
+  lbl.style.cssText='font-size:12px;color:#888780;margin-top:4px;display:block;margin-bottom:6px;';
+  lbl.textContent='Or enter manually';
+  const inp=document.createElement('input');
+  inp.type='text';inp.id='input-main';inp.placeholder='e.g. 123 Main St, Sydney NSW';
+  inp.value=(saved&&!saved.startsWith('GPS:'))?saved:'';
+  inp.addEventListener('input',()=>{if(!gpsCoords)answers[step.id]=inp.value;});
+  area.appendChild(lbl);area.appendChild(inp);
+}
+
+function renderText(area, step, saved) {
+  const inp=document.createElement('input');
+  inp.type='text';inp.id='input-main';
+  inp.placeholder=step.placeholder||'';inp.value=saved||'';
+  inp.addEventListener('input',()=>{answers[step.id]=inp.value;});
+  area.appendChild(inp);
+  setTimeout(()=>inp.focus(),50);
+}
+
+function renderTextarea(area, step, saved) {
+  const ta=document.createElement('textarea');ta.id='input-main';
+  ta.placeholder=step.placeholder||'';ta.value=saved||'';
+  ta.addEventListener('input',()=>{answers[step.id]=ta.value;});
+  area.appendChild(ta);
+  setTimeout(()=>ta.focus(),50);
+}
+
+function renderChecklist(area, step) {
+  step.items.forEach(item=>{
+    const fg=document.createElement('div');fg.className='field-group';
+    const lbl=document.createElement('div');lbl.className='sub-label';lbl.textContent=item.label;
+    fg.appendChild(lbl);
+
+    if(item.type==='text'){
+      const saved=answers[item.id];
+      const inp=document.createElement('input');
+      inp.type='text';inp.placeholder=item.placeholder||'';inp.value=saved||'';
+      inp.addEventListener('input',()=>{answers[item.id]=inp.value;});
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')e.stopPropagation();});
+      fg.appendChild(inp);
+    } else {
+      const val=answers[item.id]!==undefined?answers[item.id]:(item.defaultVal||'Yes');
+      answers[item.id]=val;
+      const group=document.createElement('div');group.className='yn-group';
+      ['Yes','No'].forEach(opt=>{
+        const btn=document.createElement('button');
+        btn.className='yn-btn'+(val===opt?' sel-'+opt.toLowerCase():'');
+        btn.textContent=opt;
+        btn.onclick=()=>{
+          answers[item.id]=opt;
+          group.querySelectorAll('.yn-btn').forEach(b=>b.className='yn-btn');
+          btn.className='yn-btn sel-'+opt.toLowerCase();
+          renderChecklistRefresh(area,step);
+        };
+        group.appendChild(btn);
+      });
+      fg.appendChild(group);
+    }
+    area.appendChild(fg);
+  });
+}
+
+function renderChecklistRefresh(area, step) {
+  steps=buildSteps();
+  const visSteps=steps.filter(s=>!s.hidden);
+  const freshStep=visSteps[currentIdx];
+  if(!freshStep||freshStep.type!=='checklist') return;
+  area.innerHTML='';
+  renderChecklist(area,freshStep);
+}
+
+function renderPhotos(area, step) {
+  const lbl=document.createElement('label');lbl.className='file-label';
+  lbl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Select photos from library</span>';
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.multiple=true;inp.capture='environment';
+  inp.style.display='none';inp.id='photoInput';
+  lbl.appendChild(inp);
+  lbl.onclick=e=>{if(e.target!==inp)inp.click();};
+  inp.onchange=()=>{
+    Array.from(inp.files).forEach(f=>photoFiles.push(f));
+    renderPhotoThumbs(preview);
+  };
+  area.appendChild(lbl);
+
+  const preview=document.createElement('div');preview.className='photo-preview';
+  renderPhotoThumbs(preview);
+  area.appendChild(preview);
+
+  if(photoFiles.length>0){
+    const note=document.createElement('div');
+    note.style.cssText='font-size:12px;color:#888780;margin-top:8px;';
+    note.textContent='Note: photos will be sent as a list of filenames in the email due to browser security limits. For full attachments, use a native app.';
+    area.appendChild(note);
+  }
+}
+
+function renderPhotoThumbs(preview) {
+  preview.innerHTML='';
+  photoFiles.forEach((f,i)=>{
+    const wrap=document.createElement('div');wrap.className='photo-remove';
+    const img=document.createElement('img');img.className='photo-thumb';
+    img.src=URL.createObjectURL(f);
+    const rmv=document.createElement('button');rmv.className='photo-remove-btn';rmv.textContent='×';
+    rmv.onclick=()=>{photoFiles.splice(i,1);renderPhotoThumbs(preview);};
+    wrap.appendChild(img);wrap.appendChild(rmv);preview.appendChild(wrap);
+  });
+}
+
+function validate() {
+  const visSteps=buildSteps().filter(s=>!s.hidden);
+  const step=visSteps[currentIdx];
+  if(!step||!step.required) return true;
+  if(step.type==='checklist') return true;
+  if(step.type==='photos') return true;
+  const val=answers[step.id];
+  if(step.type==='multiselect') return val&&val.length>0;
+  if(step.type==='select') return val&&val!=='';
+  if(step.type==='location') return val&&val.trim()!=='';
+  return val!==undefined&&val!==null&&String(val).trim()!=='';
+}
+
+function shake() {
+  const card=document.getElementById('card');
+  card.style.transform='translateX(6px)';
+  setTimeout(()=>card.style.transform='translateX(-6px)',80);
+  setTimeout(()=>card.style.transform='translateX(4px)',160);
+  setTimeout(()=>card.style.transform='translateX(0)',240);
+}
+
+function goNext() {
+  if(!validate()){shake();return;}
+  const visSteps=buildSteps().filter(s=>!s.hidden);
+  if(currentIdx<visSteps.length-1){currentIdx++;render('forward');}
+  else showSummary();
+}
+
+function goBack() {
+  if(currentIdx>0){currentIdx--;render('back');}
+}
+
+function showSummary() {
+  steps=buildSteps();
+  const visSteps=steps.filter(s=>!s.hidden);
+  const card=document.getElementById('card');
+  card.classList.remove('slide-enter','slide-back');
+  void card.offsetWidth;card.classList.add('slide-enter');
+  document.getElementById('progressFill').style.width='100%';
+  document.getElementById('stepLabel').textContent='Review your answers';
+  document.getElementById('question').textContent='Everything look good?';
+  document.getElementById('hint').textContent='Tap any answer to edit it before submitting.';
+
+  const area=document.getElementById('answerArea');
+  area.innerHTML='';
+  const ul=document.createElement('ul');ul.className='summary-list';
+
+  visSteps.forEach((s,i)=>{
+    if(s.type==='checklist'){
+      s.items.forEach(item=>{
+        const li=document.createElement('li');
+        let ans=answers[item.id];
+        if(!ans&&item.type!=='text') ans='—';
+        if(!ans) ans='Not provided';
+        li.innerHTML='<span class="summary-q">'+item.label+'</span><span class="summary-a">'+ans+'</span>';
+        li.onclick=()=>{currentIdx=i;render('back');};
+        ul.appendChild(li);
+      });
+      return;
+    }
+    if(s.type==='photos'){
+      const li=document.createElement('li');
+      li.innerHTML='<span class="summary-q">Photos</span><span class="summary-a">'+(photoFiles.length?photoFiles.length+' photo(s) selected':'None')+'</span>';
+      li.onclick=()=>{currentIdx=i;render('back');};
+      ul.appendChild(li);return;
+    }
+    const li=document.createElement('li');
+    let ans=answers[s.id];
+    if(Array.isArray(ans)) ans=ans.length?ans.join(', '):'—';
+    if(!ans) ans=s.required?'—':'Not provided';
+    li.innerHTML='<span class="summary-q">'+s.q+'</span><span class="summary-a">'+ans+'</span>';
+    li.onclick=()=>{currentIdx=i;render('back');};
+    ul.appendChild(li);
+  });
+  area.appendChild(ul);
+
+  const submitBtn=document.createElement('button');
+  submitBtn.className='submit-btn';submitBtn.textContent='Submit survey';
+  submitBtn.onclick=submitForm;
+  area.appendChild(submitBtn);
+
+  document.getElementById('backBtn').disabled=false;
+  document.getElementById('nextBtn').style.display='none';
+}
+
+async function submitForm() {
+  const btn=document.querySelector('.submit-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Sending...';
+
+  const services=answers.services;
+  const photoNames=photoFiles.map(f=>f.name).join(', ')||'None';
+
+  const checklistLines=[
+    'Vertical clearance (≥600mm maintained): '+(answers.vert_clearance||'—'),
+    answers.vert_clarification?'  → Clarification: '+answers.vert_clarification:'',
+    'Horizontal clearance (>PPE): '+(answers.horiz_clearance||'—'),
+    answers.horiz_wsa?'  → Greater than WSA minimum: '+answers.horiz_wsa:'',
+    answers.horiz_clarification?'  → Clarification: '+answers.horiz_clarification:'',
+  ].filter(Boolean).join('\n');
+
+  const params={
+    name:            answers.name||'',
+    location:        answers.location||'',
+    nbn:             answers.nbn||'',
+    services:        Array.isArray(services)&&services.length?services.join(', '):'None',
+    critical:        answers.critical||'',
+    nbn_contractor:  answers.nbn_contractor||answers.contractor||'N/A',
+    water_extracted: answers.water_extracted||'',
+    standpipe_auth:  answers.standpipe_auth||'N/A',
+    standpipe_id:    answers.standpipe_id||'N/A',
+    asset_strike:    answers.asset_strike||'',
+    checklist:       checklistLines,
+    general_notes:   answers.general_notes||'Not provided',
+    photos:          photoNames,
+    submitted_at:    new Date().toLocaleString('en-AU',{timeZone:'Australia/Sydney'})
+  };
+
+  try {
+    await emailjs.send('service_1dmia7u','template_pxu6qdb',params);
+    const card=document.getElementById('card');
+    card.innerHTML='<div style="text-align:center;padding:2rem 0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;"><div class="done-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><h2 style="font-size:20px;font-weight:500;margin-bottom:0.5rem;">Submitted!</h2><p style="font-size:14px;color:#888780;margin-top:0.5rem;">Your survey has been sent successfully.</p></div>';
+    document.querySelector('.progress-fill').style.width='100%';
+    document.querySelector('.enter-hint').style.display='none';
+  } catch(err) {
+    btn.disabled=false;btn.textContent='Submit survey';
+    alert('Failed to send.\n\nError: '+(err.text||JSON.stringify(err)));
+  }
+}
+
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName;
+  if(e.key==='Enter'){
+    if(tag==='TEXTAREA'||tag==='SELECT') return;
+    e.preventDefault();
+    if(e.shiftKey){goBack();}else{goNext();}
+  }
+});
+
+render('forward');
+</script>
+</body>
+</html>
